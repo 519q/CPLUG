@@ -8,5 +8,5 @@
 #ifndef __APPLE__
 #include "src/cplug_standalone_win.c"
 
-#include "example/example.c"
+#include "example/example.cpp"
 #endif

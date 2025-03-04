@@ -1,13 +1,19 @@
+#define _USE_MATH_DEFINES // for C++
+
 #include <cplug.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "CPlugSkiaUI.h"
 
 #ifdef _WIN32
 #define my_assert(cond) (cond) ? (void)0 : __debugbreak()
 #else
 #define my_assert(cond) (cond) ? (void)0 : __builtin_debugtrap()
 #endif
+
+
 
 // Apparently denormals aren't a problem on ARM & M1?
 // https://en.wikipedia.org/wiki/Subnormal_number
@@ -72,31 +78,34 @@ void cplug_libraryUnload(){};
 
 void* cplug_createPlugin()
 {
+    //LeakReporter g_leakReporter;
     MyPlugin* plugin = (MyPlugin*)malloc(sizeof(MyPlugin));
-    memset(plugin, 0, sizeof(*plugin));
+    if (plugin != NULL)
+    {
+        memset(plugin, 0, sizeof(*plugin));
 
-    // Init params
-    plugin->paramInfo[kParameterFloat].flags        = CPLUG_FLAG_PARAMETER_IS_AUTOMATABLE;
-    plugin->paramInfo[kParameterFloat].max          = 100.0f;
-    plugin->paramInfo[kParameterFloat].defaultValue = 50.0f;
+        // Init params
+        plugin->paramInfo[kParameterFloat].flags = CPLUG_FLAG_PARAMETER_IS_AUTOMATABLE;
+        plugin->paramInfo[kParameterFloat].max = 100.0f;
+        plugin->paramInfo[kParameterFloat].defaultValue = 50.0f;
 
-    plugin->paramValuesAudio[kParameterInt] = 2.0f;
-    plugin->paramInfo[kParameterInt].flags  = CPLUG_FLAG_PARAMETER_IS_AUTOMATABLE | CPLUG_FLAG_PARAMETER_IS_INTEGER;
-    plugin->paramInfo[kParameterInt].min    = 2.0f;
-    plugin->paramInfo[kParameterInt].max    = 5.0f;
-    plugin->paramInfo[kParameterInt].defaultValue = 2.0f;
+        plugin->paramValuesAudio[kParameterInt] = 2.0f;
+        plugin->paramInfo[kParameterInt].flags = CPLUG_FLAG_PARAMETER_IS_AUTOMATABLE | CPLUG_FLAG_PARAMETER_IS_INTEGER;
+        plugin->paramInfo[kParameterInt].min = 2.0f;
+        plugin->paramInfo[kParameterInt].max = 5.0f;
+        plugin->paramInfo[kParameterInt].defaultValue = 2.0f;
 
-    plugin->paramInfo[kParameterBool].flags = CPLUG_FLAG_PARAMETER_IS_BOOL;
-    plugin->paramInfo[kParameterBool].max   = 1.0f;
+        plugin->paramInfo[kParameterBool].flags = CPLUG_FLAG_PARAMETER_IS_BOOL;
+        plugin->paramInfo[kParameterBool].max = 1.0f;
 
-    plugin->paramValuesAudio[kParameterUTF8]       = 0.0f;
-    plugin->paramInfo[kParameterUTF8].flags        = CPLUG_FLAG_PARAMETER_IS_AUTOMATABLE;
-    plugin->paramInfo[kParameterUTF8].min          = 0.0f;
-    plugin->paramInfo[kParameterUTF8].max          = 1.0f;
-    plugin->paramInfo[kParameterUTF8].defaultValue = 0.0f;
+        plugin->paramValuesAudio[kParameterUTF8] = 0.0f;
+        plugin->paramInfo[kParameterUTF8].flags = CPLUG_FLAG_PARAMETER_IS_AUTOMATABLE;
+        plugin->paramInfo[kParameterUTF8].min = 0.0f;
+        plugin->paramInfo[kParameterUTF8].max = 1.0f;
+        plugin->paramInfo[kParameterUTF8].defaultValue = 0.0f;
 
-    plugin->midiNote = -1;
-
+        plugin->midiNote = -1;
+    }
     return plugin;
 }
 void cplug_destroyPlugin(void* ptr)
@@ -462,30 +471,30 @@ typedef struct MyGUI
     double   dragCurrentParamNormalised;
 } MyGUI;
 
-void drawRect(MyGUI* gui, uint32_t left, uint32_t right, uint32_t top, uint32_t bottom, uint32_t border, uint32_t fill)
-{
-    CPLUG_LOG_ASSERT(gui->img != NULL);
-    for (uint32_t i = top; i < bottom; i++)
-    {
-        for (uint32_t j = left; j < right; j++)
-        {
-            gui->img[i * gui->width + j] = (i == top || i == bottom - 1 || j == left || j == right - 1) ? border : fill;
-        }
-    }
-}
-
-static void drawGUI(MyGUI* gui)
-{
-    my_assert(gui->width > 0);
-    my_assert(gui->height > 0);
-    drawRect(gui, 0, gui->width, 0, gui->height, 0xC0C0C0, 0xC0C0C0);
-    drawRect(gui, 10, 40, 10, 40, 0x000000, 0xC0C0C0);
-
-    double paramFloat = gui->plugin->paramValuesMain[kParameterFloat];
-    paramFloat        = cplug_normaliseParameterValue(gui->plugin, kParameterFloat, paramFloat);
-
-    drawRect(gui, 10, 40, 10 + 30 * (1.0 - paramFloat), 40, 0x000000, 0x000000);
-}
+//void drawRect(MyGUI* gui, uint32_t left, uint32_t right, uint32_t top, uint32_t bottom, uint32_t border, uint32_t fill)
+//{
+//    CPLUG_LOG_ASSERT(gui->img != NULL);
+//    for (uint32_t i = top; i < bottom; i++)
+//    {
+//        for (uint32_t j = left; j < right; j++)
+//        {
+//            gui->img[i * gui->width + j] = (i == top || i == bottom - 1 || j == left || j == right - 1) ? border : fill;
+//        }
+//    }
+//}
+//
+//static void drawGUI(MyGUI* gui)
+//{
+//    my_assert(gui->width > 0);
+//    my_assert(gui->height > 0);
+//    drawRect(gui, 0, gui->width, 0, gui->height, 0xC0C0C0, 0xC0C0C0);
+//    drawRect(gui, 10, 40, 10, 40, 0x000000, 0xC0C0C0);
+//
+//    double paramFloat = gui->plugin->paramValuesMain[kParameterFloat];
+//    paramFloat        = cplug_normaliseParameterValue(gui->plugin, kParameterFloat, paramFloat);
+//
+//    drawRect(gui, 10, 40, 10 + 30 * (1.0 - paramFloat), 40, 0x000000, 0x000000);
+//}
 
 static void handleMouseDown(MyGUI* gui, int x, int y)
 {
@@ -560,13 +569,33 @@ bool tickGUI(MyGUI* gui)
 
     return needRedraw;
 }
+#include <out/release/gen/skia.h>
 
+static void RenderUI(uint32_t* pixelBuffer, int width, int height) {
+    SkImageInfo info = SkImageInfo::Make(width, height, kBGRA_8888_SkColorType, kPremul_SkAlphaType);
+    // Create a raster surface properly
+    sk_sp<SkSurface> surface = SkSurfaces::Raster(info);
+    surface.get();
+    if (!surface) {
+        printf("Failed to create Skia surface!\n");
+        return;
+    }
+    SkCanvas* canvas = surface->getCanvas();
+    canvas->clear(SK_ColorTRANSPARENT);
+    SkPaint paint;
+    paint.setColor(SK_ColorRED);
+    paint.setAntiAlias(true);
+    canvas->drawCircle(width / 2, height / 2, height / 4, paint);
+    int stride = width;
+    surface->readPixels(info, pixelBuffer, stride * sizeof(uint32_t), 0, 0);
+}
 #ifdef _WIN32
 #include <windows.h>
 #include <windowsx.h>
 
 #define MY_TIMER_ID 1
 
+CPlugSkiaUI skiaUI{};
 LRESULT CALLBACK MyWinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     // fprintf(stderr, "msg: %u wParam: %llu lParam: %lld\n", uMsg, wParam, lParam);
@@ -578,27 +607,46 @@ LRESULT CALLBACK MyWinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case WM_PAINT:
     {
-        drawGUI(gui);
-        PAINTSTRUCT paint;
-        HDC         dc   = BeginPaint(hwnd, &paint);
-        BITMAPINFO  info = {{sizeof(BITMAPINFOHEADER), (LONG)gui->width, (LONG)-gui->height, 1, 32, BI_RGB}};
-        StretchDIBits(
-            dc,
-            0,
-            0,
-            gui->width,
-            gui->height,
-            0,
-            0,
-            gui->width,
-            gui->height,
-            gui->img,
-            &info,
-            DIB_RGB_COLORS,
-            SRCCOPY);
-        EndPaint(hwnd, &paint);
+        if (gui && gui->img)
+        {
+            //drawGUI(gui);
+            RenderUI(gui->img, gui->width, gui->height);
+            PAINTSTRUCT paint;
+            HDC         dc = BeginPaint(hwnd, &paint);
+            BITMAPINFO  info = { {sizeof(BITMAPINFOHEADER), (LONG)gui->width, (LONG)gui->height, 1, 32, BI_RGB} };
+            StretchDIBits(
+                dc,
+                0,
+                0,
+                gui->width,
+                gui->height,
+                0,
+                0,
+                gui->width,
+                gui->height,
+                gui->img,
+                &info,
+                DIB_RGB_COLORS,
+                SRCCOPY);
+            EndPaint(hwnd, &paint);
+            ValidateRect(hwnd, NULL); // Validate the window to prevent continuous WM_PAINT messages
+        }
         break;
     }
+    case WM_SIZE:
+    {
+        if (gui) {
+            // Get new dimensions
+            int newWidth = max(LOWORD(lParam), 200);
+            int newHeight = max(HIWORD(lParam), 100);
+            cplug_setSize(gui, newWidth, newHeight);
+
+            InvalidateRect(hwnd, NULL, TRUE);
+
+        }
+        return 0;
+    }
+
     case WM_MOUSEMOVE:
         handleMouseMove(gui, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         if (gui->mouseDragging)
@@ -626,47 +674,60 @@ LRESULT CALLBACK MyWinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 void* cplug_createGUI(void* userPlugin)
 {
     MyPlugin* plugin = (MyPlugin*)userPlugin;
-    MyGUI*    gui    = (MyGUI*)malloc(sizeof(MyGUI));
-    memset(gui, 0, sizeof(*gui));
+    MyGUI* gui = (MyGUI*)malloc(sizeof(MyGUI));
+    if (gui != NULL)
+    {
+        memset(gui, 0, sizeof(*gui));
+        if (plugin != NULL)
+        {
+            gui->plugin = plugin;
+            plugin->gui = gui;
+        }
 
-    gui->plugin = plugin;
-    plugin->gui = gui;
-
-    gui->width  = GUI_DEFAULT_WIDTH;
-    gui->height = GUI_DEFAULT_HEIGHT;
-    gui->img    = (uint32_t*)realloc(gui->img, gui->width * gui->height * sizeof(*gui->img));
+        gui->width = GUI_DEFAULT_WIDTH;
+        gui->height = GUI_DEFAULT_HEIGHT;
+        gui->img = (uint32_t*)malloc(gui->width * gui->height * sizeof(uint32_t));
+        if (gui->img == NULL) {
+            // Handle error - malloc failed
+            free(gui);
+            return NULL;
+        }
+    }
 
     LARGE_INTEGER timenow;
     QueryPerformanceCounter(&timenow);
-    sprintf_s(gui->uniqueClassName, sizeof(gui->uniqueClassName), "%s-%llx", CPLUG_PLUGIN_NAME, timenow.QuadPart);
+    if (gui != NULL)
+    {
+        sprintf_s(gui->uniqueClassName, sizeof(gui->uniqueClassName), "%s-%llx", CPLUG_PLUGIN_NAME, timenow.QuadPart);
 
-    WNDCLASSEXA wc;
-    memset(&wc, 0, sizeof(wc));
-    wc.cbSize        = sizeof(wc);
-    wc.style         = CS_OWNDC;
-    wc.lpfnWndProc   = MyWinProc;
-    wc.lpszClassName = gui->uniqueClassName;
-    wc.cbWndExtra    = 32; // leave space for our pointer we set
-    ATOM result      = RegisterClassExA(&wc);
-    my_assert(result != 0);
+        WNDCLASSEXA wc;
+        memset(&wc, 0, sizeof(wc));
+        wc.cbSize = sizeof(wc);
+        wc.style = CS_OWNDC;
+        wc.lpfnWndProc = MyWinProc;
+        wc.lpszClassName = gui->uniqueClassName;
+        wc.cbWndExtra = 32; // leave space for our pointer we set
+        ATOM result = RegisterClassExA(&wc);
+        my_assert(result != 0);
 
-    gui->window = CreateWindowExA(
-        0L,
-        gui->uniqueClassName,
-        CPLUG_PLUGIN_NAME,
-        WS_CHILD | WS_CLIPSIBLINGS,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        GUI_DEFAULT_WIDTH,
-        GUI_DEFAULT_HEIGHT,
-        GetDesktopWindow(),
-        NULL,
-        NULL,
-        NULL);
-    DWORD err = GetLastError();
-    my_assert(gui->window != NULL);
+        gui->window = CreateWindowExA(
+            0L,
+            gui->uniqueClassName,
+            CPLUG_PLUGIN_NAME,
+            WS_CHILD | WS_CLIPSIBLINGS,
+            CW_USEDEFAULT,
+            CW_USEDEFAULT,
+            GUI_DEFAULT_WIDTH,
+            GUI_DEFAULT_HEIGHT,
+            GetDesktopWindow(),
+            NULL,
+            NULL,
+            NULL);
+        DWORD err = GetLastError();
+        my_assert(gui->window != NULL);
+        SetWindowLongPtrA((HWND)gui->window, 0, (LONG_PTR)gui);
+    }
 
-    SetWindowLongPtrA((HWND)gui->window, 0, (LONG_PTR)gui);
 
     return gui;
 }
@@ -728,18 +789,36 @@ void cplug_getSize(void* userGUI, uint32_t* width, uint32_t* height)
 }
 bool cplug_setSize(void* userGUI, uint32_t width, uint32_t height)
 {
-    MyGUI* gui  = (MyGUI*)userGUI;
-    gui->width  = width;
-    gui->height = height;
-    gui->img    = (uint32_t*)realloc(gui->img, width * height * sizeof(*gui->img));
-    return SetWindowPos(
-        (HWND)gui->window,
-        HWND_TOP,
-        0,
-        0,
-        width,
-        height,
-        SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOMOVE);
+    MyGUI* gui = (MyGUI*)userGUI;
+
+    // Only allocate if size has changed
+    if (gui->width != width || gui->height != height) {
+        gui->width = width;
+        gui->height = height;
+
+        // Free existing buffer
+        if (gui->img) {
+            free(gui->img);
+            gui->img = NULL; // Ensure the pointer is set to NULL after freeing
+        }
+
+        // Allocate new buffer
+        gui->img = (uint32_t*)malloc(width * height * sizeof(uint32_t));
+        if (!gui->img) {
+            return false; // Return false on failure
+        }
+
+        // Set the window size and position
+        SetWindowPos(
+            (HWND)gui->window,
+            HWND_TOP,
+            0, 0,
+            width,
+            height,
+            SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOMOVE);
+        return true;
+    }
+    return false;
 }
 
 #endif // _WIN32
